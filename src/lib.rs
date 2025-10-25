@@ -9,6 +9,23 @@ pub mod functions;
 
 const TAU: f64 = 2.0 * PI;
 
+fn generate_points(t: f64, num_coeffs: i32, coeffs: &Vec<Complex<f64>>) -> Vec<[f64; 2]> {
+    let samples = 1024;
+    let n = (t * samples as f64) as i32;
+    let dn = 1.0 / samples as f64;
+    (0..=n)
+        .map(|i| {
+            let t = i as f64 * dn;
+            let mut f = Complex::new(0.0, 0.0);
+            for (k, coeff) in coeffs.iter().enumerate() {
+                f +=
+                    coeff * Complex::from_polar(1.0, 2.0 * PI * (k as i32 - num_coeffs) as f64 * t);
+            }
+            [f.re, f.im]
+        })
+        .collect()
+}
+
 fn compute_fourier_coeffs(f: fn(f64) -> Complex<f64>, n: usize) -> Vec<Complex<f64>> {
     let n = n as i32;
     let mut coeffs = vec![];
@@ -39,9 +56,9 @@ fn input_function_line<'a>(f: fn(f64) -> Complex<f64>, n: usize) -> Line<'a> {
             [f.re, f.im]
         })
         .collect();
-    Line::new(points)
+    Line::new("input_function", points)
         .color(Color32::BLUE)
-        .width(1.0)
+        .width(2.0)
         .style(LineStyle::dashed_loose())
 }
 
@@ -59,7 +76,9 @@ fn fourier_function_line<'a>(coeffs: &Vec<Complex<f64>>, n: usize) -> Line<'a> {
             [f.re, f.im]
         })
         .collect();
-    Line::new(points).color(Color32::GREEN).width(3.0)
+    Line::new("fourier_function", points)
+        .color(Color32::GREEN)
+        .width(1.0)
 }
 
 fn animate_fourier_function<'a>(
@@ -73,7 +92,7 @@ fn animate_fourier_function<'a>(
         f += coeff * Complex::from_polar(1.0, TAU * (k as i32 - num_coeffs as i32) as f64 * t);
     }
     points.push([f.re, f.im]);
-    Line::new(PlotPoints::new(points.clone()))
+    Line::new("animated_fourier", PlotPoints::new(points.clone()))
         .color(Color32::RED)
         .width(3.0)
 }
@@ -96,5 +115,5 @@ fn vectors<'a>(coeffs: &Vec<Complex<f64>>, t: f64) -> Arrows<'a> {
     }
     let origins = arrows[0..arrows.len() - 1].to_vec();
     let tips = arrows[1..].to_vec();
-    Arrows::new(origins, tips).tip_length(3.0)
+    Arrows::new("vectors", origins, tips).tip_length(3.0)
 }
